@@ -10,6 +10,39 @@
 - 目前处于高度开发和观察阶段
 - 目前代码提供自动回复 可自行定制
 
+## 如何正确地下载electron
+
+最好是打开VPN，直接运行命令安装：`sudo npm install -g electron-prebuilt`
+
+## 无界面linux运行
+
+1. 安装[xvfb](https://www.x.org/releases/X11R7.6/doc/man/man1/Xvfb.1.xhtml)，安装firefox的目的是同时把x环境依赖安装好：
+
+```
+sudo apt-get update
+sudo apt-get install firefox
+sudo apt-get install xvfb
+```
+
+2. 启动xvfb，并设置DISPLAY环境变量，把xclient连接的xserver指定到我们的虚拟环境里：
+
+```
+sudo Xvfb :10 -ac &
+export DISPLAY=:10
+```
+
+3. 运行electron，并执行我们的脚本
+
+```
+cd wxbot
+npm install
+electron . --enable-logging
+```
+
+4. 如果在执行过程中有些文件找不到，那么可以用apt-file来查找安装包，详情请参考：http://askubuntu.com/a/59708 
+
+## 运行
+
 请使用较新版本的electron>=v1.0
 如果electron=v0.x 可以查看分支[wxbot#electron-v0](https://github.com/fritx/wxbot/tree/electron-v0)
 
@@ -18,8 +51,6 @@ $ cd wxbot
 $ npm install
 $ electron . --enable-logging  # 运行 需扫二维码登录
 ```
-
-<img width="643" src="https://raw.githubusercontent.com/fritx/wxbot/dev/screenshot.jpeg">
 
 ## 功能实现
 
@@ -33,12 +64,3 @@ $ electron . --enable-logging  # 运行 需扫二维码登录
 - [ ] 下载视频/小视频
 - [ ] 感应系统消息 时间/邀请加群/红包等
 - [x] 探索运行于无界面平台 [atom/electron#228](https://github.com/atom/electron/issues/228)
-
-## 无界面linux运行
-
-- 从命令行输出 获取二维码图片url 自行打开/扫描
-- 参照配置 [segmentio/nightmare#224 (comment)](https://github.com/segmentio/nightmare/issues/224#issuecomment-141575361)
-
-## 如何正确地下载electron
-
-参考 <http://blog.fritx.me/?weekly/150904>
