@@ -1,7 +1,16 @@
 // var ipc = require('ipc')
+
 var clipboard = require('electron').clipboard
 var nativeImage = require('electron').nativeImage
 var _ = require('lodash')
+
+
+var mongojs = require('mongojs')
+var dbS = mongojs('mongodb://localhost/Vikvon',['single'])
+var dbG = mongojs('mongodb://localhost/Vikvon',['theGroup'])
+// db.myColle.insert({boom: 1})
+
+
 
 // 应对 微信网页偷换了console 使起失效
 // 保住console引用 便于使用
@@ -80,92 +89,15 @@ function onReddot($chat_item){
 	if ($nickname.length) { // 群聊
 		var from = $nickname.text()
 		var room = $titlename.text()
+		
 	} else { // 单聊
 		var from = $titlename.text()
 		var room = null
+		
 	}
 	debug('来自', from, room) // 这里的nickname会被remark覆盖
 
-	// 系统消息暂时无法捕获
-	// 因为不产生红点 而目前我们依靠红点 可以改善
-	if ($msg.is('.message_system')) {
-		var ctn = $msg.find('.content').text()
-		if (ctn === '收到红包，请在手机上查看') {
-			text = '发毛红包'
-		} else if (ctn === '位置共享已经结束') {
-			text = '位置共享已经结束'
-		} else if (ctn === '实时对讲已经结束') {
-			text = '实时对讲已经结束'
-		} else if (ctn.match(/(.+)邀请(.+)加入了群聊/)) {
-			text = '加毛人'
-		} else if (ctn.match(/(.+)撤回了一条消息/)) {
-			text = '撤你妹'
-		} else {
-			// 无视
-		}
-	} else
-
-	if ($msg.is('.emoticon')) { // 自定义表情
-		var src = $msg.find('.msg-img').prop('src')
-		debug('接收', 'emoticon', src)
-		reply.text = '发毛表情'
-	} else if ($msg.is('.picture')) {
-		var src = $msg.find('.msg-img').prop('src')
-		debug('接收', 'picture', src)
-		// reply.text = '发毛图片'
-		reply.image = './fuck.jpeg'
-	} else if ($msg.is('.location')) {
-		//var src = $msg.find('.img').prop('src')
-		var desc = $msg.find('.desc').text()
-		debug('接收', 'location', desc)
-		reply.text = desc
-	} else if ($msg.is('.attach')) {
-		var title = $msg.find('.title').text()
-		var size = $msg.find('span:first').text()
-		var $download = $msg.find('a[download]') // 可触发下载
-		debug('接收', 'attach', title, size)
-		reply.text = title + '\n' + size
-	} else if ($msg.is('.microvideo')) {
-		var poster = $msg.find('img').prop('src') // 限制
-		var src = $msg.find('video').prop('src') // 限制
-		debug('接收', 'microvideo', src)
-		reply.text = '发毛小视频'
-	} else if ($msg.is('.video')) {
-		var poster = $msg.find('.msg-img').prop('src') // 限制
-		debug('接收', 'video', src)
-		reply.text = '发毛视频'
-	} else if ($msg.is('.voice')) {
-		$msg[0].click()
-		var duration = parseInt($msg.find('.duration').text())
-		var src = $('#jp_audio_1').prop('src') // 认证限制
-		var msgid = src.match(/msgid=(\d+)/)[1]
-		var date = new Date().toJSON()
-			.replace(/\..+/, '')
-			.replace(/[\-:]/g, '')
-			.replace('T', '-')
-		// 20150927-164539_5656119287354277662.mp3
-		var filename = `${date}_${msgid}.mp3`
-		$('<a>').attr({
-			download: filename,
-			href: src
-		})[0].click() // 触发下载
-		debug('接收', 'voice', `${duration}s`, src)
-		reply.text = '发毛语音'
-	} else if ($msg.is('.card')) {
-		var name = $msg.find('.display_name').text()
-		var wxid = $msg.find('.signature').text()
-		var img = $msg.find('.img').prop('src') // 认证限制
-		debug('接收', 'card', name, wxid)
-		reply.text = name + '\n' + wxid
-	} else if ($msg.is('a.app')) {
-		var url = $msg.attr('href')
-		url = decodeURIComponent(url.match(/requrl=(.+?)&/)[1])
-		var title = $msg.find('.title').text()
-		var desc = $msg.find('.desc').text()
-		var img = $msg.find('.cover').prop('src') // 认证限制
-		debug('接收', 'link', title, desc, url)
-		reply.text = title + '\n' + url
-	} else if ($msg.is('.plain')) {
+	if ($msg.is('.plain')) {
 		var text = ''
 		var normal = false
 		var $text = $msg.find('.js_message_plain')
@@ -207,19 +139,17 @@ function onReddot($chat_item){
 
 	// 借用clipboard 实现输入文字 更新ng-model=EditAreaCtn
 	// ~~直接设#editArea的innerText无效 暂时找不到其他方法~~
-	paste(reply)
+	// paste(reply, room)
 
-	// 发送text 可以直接更新scope中的变量 @昌爷 提点
-	// 但不知为毛 发不了表情
-	// if (reply.image) {
-	// 	paste(reply)
-	// } else {
-	// 	angular.element('#editArea').scope().editAreaCtn = reply.text
-	// }
+    if (!room) {
+    	dbS.single.insert(reply)
+    } else {
+    	reply.from = from
+    	reply.room = room
+    	dbG.theGroup.insert(reply)
+    }
 
 
-	// $('.web_wechat_face')[0].click()
-	// $('[title=阴险]')[0].click()
 
 	if (reply.image) {
 		setTimeout(function(){
@@ -252,26 +182,16 @@ function reset(){
 	free = true
 }
 
-function paste(opt){
-	var oldImage = clipboard.readImage()
-	var oldHtml = clipboard.readHtml()
-	var oldText = clipboard.readText()
-	clipboard.clear() // 必须清空
-	if (opt.image) {
-		// 不知为啥 linux上 clipboard+nativeimage无效
-		try {
-			clipboard.writeImage(nativeImage.createFromPath(opt.image))
-		} catch (err) {
-			opt.image = null
-			opt.text = '妈蛋 发不出图片'
-		}
-	}
-	if (opt.html) clipboard.writeHtml(opt.html)
-	if (opt.text) clipboard.writeText(opt.text)
-	$('#editArea')[0].focus()
-	document.execCommand('paste')
-	clipboard.writeImage(oldImage)
-	clipboard.writeHtml(oldHtml)
-	clipboard.writeText(oldText)
-}
+// function paste(opt, waltWhite){
+// 	// var oldImage = clipboard.readImage()
+// 	var oldHtml = clipboard.readHtml()
+// 	var oldText = clipboard.readText()
+// 	clipboard.clear() // 必须清空
+
+//     if (!waltWhite) {
+//     	dbS.single.insert(opt)
+//     } else {
+//     	dbG.theGroup.insert(opt)
+//     }
+// }
 

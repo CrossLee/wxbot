@@ -19,6 +19,13 @@ app.on('ready', function(){
 	// var win = new BrowserWindow({})
 	// win.loadURL('file://' + __dirname + '/index.html')
 
+	var displayData = new BrowserWindow({
+		width: 900,
+		height: 610,
+	})
+	displayData.loadURL('file://' + __dirname + '/displayData.html')
+
+
 	var win = new BrowserWindow({
 		width: 900,
 		height: 610,
