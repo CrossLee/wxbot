@@ -34,7 +34,15 @@ sudo Xvfb :10 -ac &
 export DISPLAY=:10
 ```
 
-3. 运行electron，并执行我们的脚本
+3. 安装mongodb，以ubuntu 14为例
+
+```
+echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+sudo apt-get update
+sudo apt-get install mongodb-org
+```
+
+4. 运行electron，并执行我们的脚本
 
 ```
 cd wxbot
@@ -42,18 +50,20 @@ npm install
 electron . --enable-logging
 ```
 
-4. 如果在执行过程中有些文件找不到，那么可以用apt-file来查找安装包，详情请参考：http://askubuntu.com/a/59708 
+5. 如果在执行过程中有些文件找不到，那么可以用apt-file来查找安装包，详情请参考：http://askubuntu.com/a/59708 
+
+6. 如果只监听几个群聊，那么请修改 [preload.js](https://github.com/shiyimin/wxbot/blob/master/preload.js) 里的数组 `_bigBrother`，加上你要监听的群聊名称即可。
 
 ## 运行
 
-请使用较新版本的electron>=v1.0
-如果electron=v0.x 可以查看分支[wxbot#electron-v0](https://github.com/fritx/wxbot/tree/electron-v0)
-
+1. 启动express服务器，监听请求
 ```plain
-$ cd wxbot
-$ npm install
-$ electron . --enable-logging  # 运行 需扫二维码登录
+$ sudo node webserver.js 
 ```
+
+2. 打开浏览器，访问：http://yourhost/
+
+3. 扫描二维码，就可以登录微信机器人，并记录聊天记录。扫描二维码后，其实就是启动一个新的 electron 进程。
 
 ## 功能实现
 
