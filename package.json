@@ -17,6 +17,8 @@
     "bytes": "^2.1.0",
     "fs-extra": "^0.24.0",
     "lodash": "^3.10.1",
-    "mongojs": "^2.4.0"
+    "mongojs": "^2.4.0",
+    "express": "^4.x",
+    "moment": "^2.x"
   }
 }

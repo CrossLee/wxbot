@@ -22,6 +22,8 @@
 sudo apt-get update
 sudo apt-get install firefox
 sudo apt-get install xvfb
+sudo apt-get install xfonts-100dpi xfonts-75dpi xfonts-scalable xfonts-cyrillic
+sudo apt-get install libxss1 libgconf-2-4
 ```
 
 2. 启动xvfb，并设置DISPLAY环境变量，把xclient连接的xserver指定到我们的虚拟环境里：

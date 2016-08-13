@@ -1,6 +1,7 @@
 var clipboard = require('electron').clipboard
 var nativeImage = require('electron').nativeImage
 var _ = require('lodash')
+var moment = require('moment');
 var ipcRenderer = require('electron').ipcRenderer;  
 
 var mongojs = require('mongojs')
@@ -45,30 +46,107 @@ function init(){
 	}, 500)
 }
 
-function onLogin(){
-	// ipc.sendToHost('login')
-	$('img[src*=filehelper]').closest('.chat_item')[0].click()
-	var checkForReddot = setInterval(function(){
-		// window.isFocus = true
-		var $reddot = $('.web_wechat_reddot, .web_wechat_reddot_middle').last()
-		if ($reddot.length) {
-			var $chat_item = $reddot.closest('.chat_item')
-			try {
-				onReddot($chat_item)
-			} catch (err) { // 错误解锁
-				reset()
+var _bigBrother = [{
+	name: '机器人',
+	lastmsg: ''
+}, {
+	name: 'jvm研究',
+	lastmsg: ''
+}, {
+	name: 'erp移动信息化平台 交流群',
+	lastmsg: ''
+}, {
+	name: 'topgeek | java开发者',
+	lastmsg: ''
+}, {
+	name: '架构师高级群',
+	lastmsg: ''
+}, {
+	name: '智能交互&朋友们',
+	lastmsg: ''
+}, {
+	name: '中国架构师群英会',
+	lastmsg: ''
+}, {
+	name: '火星高可用架构群',
+	lastmsg: ''
+}, {
+	name: '黑画会 01',
+	lastmsg: ''
+}, {
+	name: '贵溪上海商会.会员群',
+	lastmsg: ''
+}];
+
+function checkMsgByReddot() {
+	var $reddot = $('.web_wechat_reddot, .web_wechat_reddot_middle').last()
+	if ($reddot.length) {
+		var $chat_item = $reddot.closest('.chat_item');
+		try {
+			onReddot($chat_item)
+		} catch (err) { // 错误解锁
+			reset()
+		}
+	}
+}
+
+function bigBrotherIsWatching() {
+	$('.chat_item').each(function(idx, item) {
+		var $nickname = $(item).find('.info .nickname .nickname_text');
+
+		if ($nickname.length) {
+			var title = $nickname.text();
+			title = title.toLowerCase();
+			for (var i = 0; i < _bigBrother.length; ++i) {
+				var bb = _bigBrother[i];
+				var $msg = $(item).find('.info .msg');
+				if (!$msg) continue;
+
+				var msg = $msg.text();
+				msg = msg ? msg.trim() : '';
+				if (bb.name == title && msg && bb.lastmsg != msg) {
+					bb.lastmsg = msg;
+					onReddot([item]);
+				}
 			}
 		}
-	}, 100)
+	})
+}
+
+function onLogin(){
+	$('img[src*=filehelper]').closest('.chat_item')[0].click()
+	var checkForReddot = setInterval(function(){
+		if (_bigBrother.length) {
+			bigBrotherIsWatching();
+		} else {
+			checkMsgByReddot();
+		}
+	}, 500)
+}
+
+function onWxSystemMsg() {
+	var $msg = $([
+		'.message:not(.me) .bubble_cont > div',
+		'.message:not(.me) .bubble_cont > a.app',
+		'.message:not(.me) .emoticon',
+		'.message_system'
+	].join(', ')).last()
+	if ($msg.is('.message_system')) {
+		text = $msg.text();
+		debug('收到消息');
+	} 
 }
 
 function onReddot($chat_item){
-	if (!free) return
-	free = false
+	// if (!free) return
+	// free = false
 	$chat_item[0].click()
 
 	setTimeout(function(){
-		var reply = {}
+		var reply = {
+			date: moment().format('YYYY-MM-DD'),
+			time: new Date().getTime()
+		}
 
 		// 自动回复 相同的内容
 		var $msg = $([
@@ -136,7 +214,7 @@ function onReddot($chat_item){
 
 		// 借用clipboard 实现输入文字 更新ng-model=EditAreaCtn
 		// ~~直接设#editArea的innerText无效 暂时找不到其他方法~~
-		paste(reply, room)
+		// paste(reply, room)
 
 		if (dbS) {
 			if (!room) {
@@ -166,7 +244,6 @@ function onReddot($chat_item){
 		}
 	}, 100)
 }
-
 
 function reset(){
 	// 适当清理历史 缓解dom数量
