@@ -13,6 +13,7 @@
 ## 如何正确地下载electron
 
 最好是打开VPN，直接运行命令安装：`sudo npm install -g electron-prebuilt`
+如果在安装的时候，发现electron下载不下来，那么可以先用vpn在浏览器里下载下来，然后将下载下来的`electron-v1.3.3-linux-x64.zip` 上传到服务器的 `~/.electron` 文件夹就可以了。
 
 ## 无界面linux运行
 
